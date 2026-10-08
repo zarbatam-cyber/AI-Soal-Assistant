@@ -1,0 +1,41 @@
+name: Extract Android Project
+
+on:
+  push:
+    paths:
+      - "AsistenAISoal_Project.zip"
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract ZIP
+        run: |
+          mkdir temp_project
+          unzip -q AsistenAISoal_Project.zip -d temp_project
+
+          COUNT=$(find temp_project -mindepth 1 -maxdepth 1 | wc -l)
+
+          if [ "$COUNT" -eq 1 ] && [ -d "$(find temp_project -mindepth 1 -maxdepth 1 -type d | head -1)" ]; then
+            cp -R "$(find temp_project -mindepth 1 -maxdepth 1 -type d | head -1)"/. .
+          else
+            cp -R temp_project/. .
+          fi
+
+          rm -rf temp_project
+          rm AsistenAISoal_Project.zip
+
+      - name: Commit project
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Extract Android project" || exit 0
+          git push
